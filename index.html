@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Rubik's Cube Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* A little bit of custom CSS for better touch feedback */
+        .control-btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Main container with vertical flex layout and padding -->
+    <main class="flex flex-col items-center justify-center min-h-screen p-4">
+
+        <!-- Canvas Container: Responsive width and aspect ratio -->
+        <div id="canvas-container" class="w-full max-w-xs sm:max-w-sm md:max-w-md aspect-square mb-4"></div>
+
+        <!-- Solution Display: Responsive width and height -->
+        <div id="solution-display" class="w-full max-w-xs sm:max-w-sm md:max-w-md text-center p-3 my-2 bg-white rounded-lg shadow-md h-24 flex items-center justify-center overflow-y-auto">
+            <p class="text-gray-500 text-base font-mono">Solution will appear here...</p>
+        </div>
+
+        <!-- Controls Panel: Responsive layout for all buttons -->
+        <div class="controls-panel w-full max-w-xs sm:max-w-sm md:max-w-md p-4 bg-white rounded-lg shadow-md">
+            
+            <!-- Move Buttons: Grid adapts from 3 to 6 columns -->
+            <div class="grid grid-cols-6 gap-2 text-sm">
+                <!-- Row 1: Clockwise moves (labeled with prime in UI) -->
+                <button id="btn-u" class="control-btn bg-blue-500 text-white font-bold py-2 px-2 rounded-md">U'</button>
+                <button id="btn-l" class="control-btn bg-orange-500 text-white font-bold py-2 px-2 rounded-md">L'</button>
+                <button id="btn-f" class="control-btn bg-green-500 text-white font-bold py-2 px-2 rounded-md">F'</button>
+                <button id="btn-r" class="control-btn bg-red-500 text-white font-bold py-2 px-2 rounded-md">R'</button>
+                <button id="btn-b" class="control-btn bg-yellow-500 text-white font-bold py-2 px-2 rounded-md">B'</button>
+                <button id="btn-d" class="control-btn bg-gray-300 text-black font-bold py-2 px-2 rounded-md">D'</button>
+
+                <!-- Row 2: Counter-clockwise moves (labeled without prime in UI) -->
+                <button id="btn-u-prime" class="control-btn bg-blue-500 text-white font-bold py-2 px-2 rounded-md">U</button>
+                <button id="btn-l-prime" class="control-btn bg-orange-500 text-white font-bold py-2 px-2 rounded-md">L</button>
+                <button id="btn-f-prime" class="control-btn bg-green-500 text-white font-bold py-2 px-2 rounded-md">F</button>
+                <button id="btn-r-prime" class="control-btn bg-red-500 text-white font-bold py-2 px-2 rounded-md">R</button>
+                <button id="btn-b-prime" class="control-btn bg-yellow-500 text-white font-bold py-2 px-2 rounded-md">B</button>
+                <button id="btn-d-prime" class="control-btn bg-gray-300 text-black font-bold py-2 px-2 rounded-md">D</button>
+            </div>
+            
+            <!-- Action Buttons: Flexbox for responsive centering and wrapping -->
+            <div class="flex flex-wrap justify-center gap-3 mt-4">
+                <button id="btn-scramble" class="control-btn flex-grow sm:flex-grow-0 bg-purple-500 text-white font-bold py-2 px-5 rounded-md">Scramble</button>
+                <button id="btn-reset" class="control-btn flex-grow sm:flex-grow-0 bg-gray-700 text-white font-bold py-2 px-5 rounded-md">Reset</button>
+                <button id="btn-solve" class="control-btn flex-grow sm:flex-grow-0 bg-teal-500 text-white font-bold py-2 px-5 rounded-md">Solve Cube</button>
+            </div>
+        </div>
+    </main>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+      }
+    }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
