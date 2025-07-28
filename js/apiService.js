@@ -4,7 +4,7 @@ export async function solveCube(cubeString,cube) {
         return;
     }
 
-    const endpoint = 'http://68.183.85.184:8080/solve'; // Ensure your server is running here
+    const endpoint = 'https://shrey-rubik-solver.duckdns.org/solve'; // Ensure your server is running here
      const solutionDisplay = document.getElementById('solution-display');
 
     
