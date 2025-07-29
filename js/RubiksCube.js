@@ -42,11 +42,6 @@ export class RubiksCube {
                     const geometry = new THREE.BoxGeometry(cubieSize, cubieSize, cubieSize);
                     const cubie = new THREE.Mesh(geometry, materials);
                     cubie.position.set(x * totalSize, y * totalSize, z * totalSize);
-
-                    const edgeGeometry = new THREE.EdgesGeometry(geometry);
-                    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 4 });
-                    cubie.add(new THREE.LineSegments(edgeGeometry, edgeMaterial));
-
                     this.cubies.push(cubie);
                     this.scene.add(cubie);
                 }
@@ -81,24 +76,17 @@ export class RubiksCube {
         solutionDisplay.innerHTML=`<p class="text-gray-500 text-base font-mono">Solution will appear here...</p>`;
     }
 
-    // In the RubiksCube class within js/RubiksCube.js
-
     move(notation) {
         if (this.isAnimating) return;
         this.isAnimating = true;
-        this.toggleControls(false); // Disable buttons at the start of the move
+        this.toggleControls(false); 
 
         const pivot = new THREE.Object3D();
-        const angle = (notation.includes("'") ? 1 : -1) * Math.PI / 2; // FIX: U' should be positive angle for Y-up
+        const angle = (notation.includes("'") ? -Math.PI / 2 : Math.PI / 2);
         const axis = new THREE.Vector3(0, 0, 0);
         let layer = [];
         const threshold = 0.5;
 
-        // IMPORTANT: The rotation direction depends on the axis.
-        // Standard notation assumes you're looking at the face.
-        // U/D rotate around Y, L/R rotate around X, F/B rotate around Z.
-        // A positive rotation for U (Y-axis) is counter-clockwise.
-        // We adjust the angle here to match standard notation.
         let correctedAngle = angle;
 
         switch (notation.charAt(0)) {
@@ -110,24 +98,16 @@ export class RubiksCube {
             case 'B': axis.set(0, 0, 1); layer = this.cubies.filter(c => c.position.z < -threshold); correctedAngle = angle; break;
         }
 
-        // Attach all cubies in the selected layer to the pivot
         layer.forEach(cubie => pivot.add(cubie));
         this.scene.add(pivot);
 
-        // Animate the pivot's rotation
         new TWEEN.Tween(pivot.rotation)
             .to({ x: axis.x * correctedAngle, y: axis.y * correctedAngle, z: axis.z * correctedAngle }, 300)
             .easing(TWEEN.Easing.Quadratic.Out)
             .onComplete(() => {
-                // This is the critical section that needed fixing
-                pivot.updateMatrixWorld(); // Ensure pivot's world matrix is up-to-date
+                pivot.updateMatrixWorld(); 
 
                 for (const cubie of [...pivot.children]) {
-                    // STEP 1: Get the cubie's new world matrix after rotation
-                    const worldPosition = new THREE.Vector3();
-                    const worldQuaternion = new THREE.Quaternion();
-                    cubie.getWorldPosition(worldPosition);
-                    cubie.getWorldQuaternion(worldQuaternion);
                     this.scene.attach(cubie);
                     cubie.position.set(
                         Math.round(cubie.position.x / totalSize) * totalSize,
@@ -136,10 +116,9 @@ export class RubiksCube {
                     );
                 }
 
-                // Clean up the pivot object
                 this.scene.remove(pivot);
                 this.isAnimating = false;
-                this.toggleControls(true); // Re-enable buttons when the move is finished
+                this.toggleControls(true); 
 
             })
             .start();
@@ -150,7 +129,7 @@ export class RubiksCube {
         const moves = ['U', 'D', 'L', 'R', 'F', 'B', "U'", "D'", "L'", "R'", "F'", "B'"];
         let i = 0;
         const performNextMove = () => {
-            if (i < 9) {
+            if (i < 20) { // A 20-move scramble
                 this.move(moves[Math.floor(Math.random() * moves.length)]);
                 i++;
                 setTimeout(performNextMove, 350);
@@ -159,22 +138,16 @@ export class RubiksCube {
         performNextMove();
     }
 
-    // In js/RubiksCube.js
     animateSolution(solutionString) {
         if (this.isAnimating) return;
 
-        // This helper function converts the backend notation (e.g., 'f')
-        // to the frontend's move notation (e.g., "F'").
         const convertNotation = (move) => {
-            // Uppercase from backend is clockwise, which is a prime move in the UI's logic.
             if (move >= 'A' && move <= 'Z') {
-                return move + "'";
+                return move;
+            } else if (move >= 'a' && move <= 'z') {
+                return move.toUpperCase() + "'";
             }
-            // Lowercase from backend is counter-clockwise, which is a normal move in the UI.
-            else if (move >= 'a' && move <= 'z') {
-                return move.toUpperCase();
-            }
-            return null; // Should not happen with valid input
+            return null;
         };
 
         const moves = solutionString.split('').map(convertNotation).filter(m => m !== null);
@@ -189,72 +162,93 @@ export class RubiksCube {
             if (i < moves.length) {
                 this.move(moves[i]);
                 i++;
-                // Use a timeout to create a delay between each move in the animation.
-                setTimeout(performNextMove, 350); // 350ms delay
+                setTimeout(performNextMove, 350);
             }
         };
 
         console.log("Starting solution animation...");
         performNextMove();
     }
-// ... (constructor, createCube, move, scramble, and reset methods remain the same)
 
-
-        getCubeState() {
-            if (this.isAnimating) {
-                console.warn("Animation in progress. Aborting getState.");
-                return null;
-            }
-
-            const colorHexMap = {
-                'ffd500': 'Y', 'ffffff': 'W', '0045ad': 'B',
-                '009b48': 'G', 'b90000': 'R', 'ff5900': 'O'
-            };
-
-            const state = {};
-            const raycaster = new THREE.Raycaster();
-            const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000); // A temporary camera
-
-            const facesToScan = [
-                { name: 'U', position: [0, 8, 0], lookAt: [0, 0, 0] },
-                { name: 'L', position: [-8, 0, 0], lookAt: [0, 0, 0] },
-                { name: 'F', position: [0, 0, 8], lookAt: [0, 0, 0] },
-                { name: 'R', position: [8, 0, 0], lookAt: [0, 0, 0] },
-                { name: 'B', position: [0, 0, -8], lookAt: [0, 0, 0] },
-                { name: 'D', position: [-0, -8, 0], lookAt: [0, 0, 0] }
-            ];
-
-            facesToScan.forEach(faceInfo => {
-                camera.position.set(...faceInfo.position);
-                camera.lookAt(...faceInfo.lookAt);
-                camera.updateMatrixWorld(); // Important: update camera's matrices
-
-                const faceColors = [];
-                // Create a 3x3 grid in the camera's view
-                for (let y = 1; y > -2; y--) {
-                    for (let x = -1; x < 2; x++) {
-                        // Map the grid point to normalized device coordinates (-1 to +1)
-                        const ndc = new THREE.Vector2(x * 0.3, y * 0.3);
-                        raycaster.setFromCamera(ndc, camera);
-
-                        const intersects = raycaster.intersectObjects(this.cubies);
-
-                        if (intersects.length > 0) {
-                            const materialIndex = intersects[0].face.materialIndex;
-                            const colorHex = intersects[0].object.material[materialIndex].color.getHexString();
-                            faceColors.push(colorHexMap[colorHex]);
-                        } else {
-                            faceColors.push('?'); // Should not happen in a valid state
-                        }
-                    }
-                }
-                state[faceInfo.name] = faceColors;
-            });
-
-            // Assemble the final string in the correct Kociemba order.
-            return (
-                state.U.join('') + state.R.join('') + state.F.join('') +
-                state.D.join('') + state.L.join('') + state.B.join('')
-            );
+    getCubeState() {
+        if (this.isAnimating) {
+            console.warn("Animation in progress. Aborting getState.");
+            return null;
         }
+
+        const colorHexMap = {
+            'ffd500': 'Y', 'ffffff': 'W', '0045ad': 'B',
+            '009b48': 'G', 'b90000': 'R', 'ff5900': 'O'
+        };
+
+        const state = { U: [], R: [], F: [], D: [], L: [], B: [] };
+        const localFaceNormals = [
+            { dir: new THREE.Vector3(1, 0, 0), name: 'R' }, { dir: new THREE.Vector3(-1, 0, 0), name: 'L' },
+            { dir: new THREE.Vector3(0, 1, 0), name: 'U' }, { dir: new THREE.Vector3(0, -1, 0), name: 'D' },
+            { dir: new THREE.Vector3(0, 0, 1), name: 'F' }, { dir: new THREE.Vector3(0, 0, -1), name: 'B' }
+        ];
+
+        const stickers = [];
+        this.cubies.forEach(cubie => {
+            for (let i = 0; i < cubie.material.length; i++) {
+                const colorHex = cubie.material[i].color.getHexString();
+                if (colorHex === '111111') continue;
+
+                const worldNormal = localFaceNormals[i].dir.clone().applyQuaternion(cubie.quaternion).round();
+                stickers.push({
+                    position: cubie.position.clone(),
+                    color: colorHexMap[colorHex],
+                    normal: worldNormal
+                });
+            }
+        });
+
+        Object.keys(state).forEach(faceName => {
+            const faceNormal = localFaceNormals.find(f => f.name === faceName).dir;
+            const faceStickers = stickers.filter(s => s.normal.equals(faceNormal));
+
+            // ⭐ FIX: This is the corrected sorting logic for all faces to ensure Kociemba order.
+            faceStickers.sort((a, b) => {
+                const posA = a.position;
+                const posB = b.position;
+                if (faceName === 'U') {
+                    return posA.z - posB.z || posA.x - posB.x;
+                }
+                if (faceName === 'D') {
+                    return posB.z - posA.z || posA.x - posB.x;
+                }
+                if (faceName === 'F') {
+                    return posB.y - posA.y || posA.x - posB.x;
+                }
+                if (faceName === 'B') {
+                    return posB.y - posA.y || posB.x - posA.x;
+                }
+                if (faceName === 'R') {
+                    return posB.y - posA.y || posB.z - posA.z;
+                }
+                if (faceName === 'L') {
+                    return posB.y - posA.y || posA.z - posB.z;
+                }
+                return 0;
+            });
+            state[faceName] = faceStickers.map(s => s.color);
+        });
+
+        const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
+        let str = "";
+        faceOrder.forEach(face => {
+            str += state[face].join('');
+        });
+
+        const counts = {};
+        for(const char of str) { counts[char] = (counts[char] || 0) + 1; }
+        const isValid = Object.values(counts).every(c => c === 9) && str.length === 54;
+        
+        if (!isValid) {
+            console.error("CRITICAL ERROR: Generated an invalid cube string.", str, counts);
+            return null;
+        }
+        
+        return str;
+    }
 }
