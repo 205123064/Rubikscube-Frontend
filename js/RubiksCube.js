@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const cubieSize = 1.5;
+const cubieSize = 1.3;
 const spacing = 0.05;
 const totalSize = cubieSize + spacing;
 

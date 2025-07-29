@@ -14,6 +14,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -21,13 +22,13 @@
 <body class="bg-gray-100 text-gray-800">
 
     <!-- Main container with vertical flex layout and padding -->
-    <main class="flex flex-col items-center justify-center  p-4">
+    <main class="flex flex-col items-center justify-center h-screen  p-2 sm:p-4">
 
         <!-- Canvas Container: Responsive width and aspect ratio -->
         <div id="canvas-container" class="w-full max-w-xs sm:max-w-sm md:max-w-md aspect-square mb-4"></div>
 
         <!-- Solution Display: Responsive width and height -->
-        <div id="solution-display" class="w-full max-w-xs sm:max-w-sm md:max-w-md text-center p-3 my-2 bg-white rounded-lg shadow-md h-24 flex items-center justify-center overflow-y-auto">
+        <div id="solution-display" class="w-full max-w-xs sm:max-w-sm md:max-w-md text-center p-3 my-1 bg-white rounded-lg shadow-md h-20 flex items-center justify-center overflow-y-auto">
             <p class="text-gray-500 text-base font-mono">Solution will appear here...</p>
         </div>
 
